@@ -1,0 +1,21 @@
+# 데이터와 결과물은 저장소에 넣지 않음 (ECO·IDEAL 배포 조건, 용량)
+data/
+results/
+*.csv
+*.zip
+*.csv.gz
+
+# 그림 출력
+*.png
+*.pdf
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+.ipynb_checkpoints/
+
+# OS
+.DS_Store
+Thumbs.db
