@@ -29,6 +29,16 @@ DCU가 관측하는 데이터로 대상 가구의 재실일/부재일을 구분�
 
 `eco_sm_resample.py`는 기존 `eco_sm_to_hourly.py`의 확장판이며, `eco_sm_hourly.csv`는 기존 스크립트와 같은 형식·값으로 출력됩니다.
 
+## IDEAL 전처리 (혼합 가구 풀)
+
+```
+python exp1_privacy/preprocess/ideal_resample.py <IDEAL 폴더 또는 zip> --list      # 먼저 대상 파일 확인
+python exp1_privacy/preprocess/ideal_resample.py <IDEAL 폴더 또는 zip> --workers 4
+```
+
+- 기본으로 파일 이름에 `electric-mains`, `electric-combined`가 모두 들어간 파일(가구별 mains 피상전력, 1Hz)을 처리합니다. 다르면 `--match`로 바꾸세요.
+- UTC 시각을 영국 현지 시각(GMT/BST)으로 변환하고, ECO와 같은 형식의 `ideal_sm_15min.csv`, `ideal_sm_30min.csv`, `ideal_sm_hourly.csv`를 만듭니다. 가구 이름은 `h<번호>`입니다.
+
 ## 단편논문 표 1 각 열의 출처
 
 | 표 1 열 | 파일 | 컬럼 |
