@@ -17,25 +17,17 @@ from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import balanced_accuracy_score
 
-D = sys.argv[1]
-HH_ALL = ["01", "02", "03", "04", "05", "06"]
-LABELLED = ["01", "02", "03", "04", "05"]
-TARGETS = ["01", "02", "03"]
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from common import args, load, suffix, H, HH_ALL, LABELLED, TARGETS
 
-sm = pd.read_csv(os.path.join(D, "eco_sm_hourly.csv"), dtype={"household": str})
-sm["valid"] = (sm.coverage >= 0.9) & sm.power_mean_w.notna()
-dayok = sm.groupby(["household", "date"]).valid.sum().ge(22)
-okdays = {hh: set(d for (h, d), v in dayok.items() if v and h == hh) for hh in HH_ALL}
-P = sm.pivot_table(index=["date", "hour"], columns="household", values="power_mean_w")
-P = P.groupby(level=0).transform(lambda s: s.interpolate(limit_direction="both"))
-prof = {hh: {d: P.loc[d, hh].to_numpy() for d in okdays[hh]} for hh in HH_ALL}
-occ = pd.read_csv(os.path.join(D, "occ_hourly.csv"), dtype={"household": str})
-dayocc = occ[(occ.hour >= 8) & (occ.hour < 18)].groupby(["household", "date"]).occ_frac.mean()
+D, RES = args()
+okdays, prof, dayocc = load(D, RES)
+D8, D18, N6 = H(8, RES), H(18, RES), H(6, RES)
 
 
 def feats(z):
-    return np.concatenate([z, [z.mean(), z.std(), z.min(), z.max(), z[8:18].mean() - z[:6].mean(),
-                               z[8:18].std()]])
+    return np.concatenate([z, [z.mean(), z.std(), z.min(), z.max(), z[D8:D18].mean() - z[:N6].mean(),
+                               z[D8:D18].std()]])
 
 
 def stream(t, combo):
@@ -96,7 +88,7 @@ for t in TARGETS:
         print("done", t, k, len(ytr), flush=True)
 
 R = pd.DataFrame(rows)
-R.to_csv(os.path.join(D, "crosshh_results.csv"), index=False)
+R.to_csv(os.path.join(D, f"crosshh_results{suffix(RES)}.csv"), index=False)
 W = R.pivot_table(index=["target", "k", "combo"], columns="model", values="adv").reset_index()
 g = W.groupby("k")[["RF", "GB", "LR"]]
 m, se = g.mean(), g.std() / np.sqrt(g.size().to_numpy()[:, None])

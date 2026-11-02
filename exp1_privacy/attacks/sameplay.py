@@ -16,20 +16,12 @@ from sklearn.model_selection import StratifiedKFold
 from sklearn.metrics import balanced_accuracy_score
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-D = sys.argv[1]
-HH_ALL = ["01", "02", "03", "04", "05", "06"]
-TARGETS = ["01", "02", "03"]
-W = 2
+from common import args, load, suffix, H, HH_ALL, TARGETS
 
-sm = pd.read_csv(os.path.join(D, "eco_sm_hourly.csv"), dtype={"household": str})
-sm["valid"] = (sm.coverage >= 0.9) & sm.power_mean_w.notna()
-dayok = sm.groupby(["household", "date"]).valid.sum().ge(22)
-okdays = {hh: set(d for (h, d), v in dayok.items() if v and h == hh) for hh in HH_ALL}
-P = sm.pivot_table(index=["date", "hour"], columns="household", values="power_mean_w")
-P = P.groupby(level=0).transform(lambda s: s.interpolate(limit_direction="both"))
-prof = {hh: {d: P.loc[d, hh].to_numpy() for d in okdays[hh]} for hh in HH_ALL}
-occ = pd.read_csv(os.path.join(D, "occ_hourly.csv"), dtype={"household": str})
-dayocc = occ[(occ.hour >= 8) & (occ.hour < 18)].groupby(["household", "date"]).occ_frac.mean()
+D, RES = args()
+W = H(2, RES)  # Combined 함수 창 크기: 2시간 (60분: 2구간, 30분: 4구간, 15분: 8구간)
+okdays, prof, dayocc = load(D, RES)
+D8, D18, N6 = H(8, RES), H(18, RES), H(6, RES)
 
 
 def peaks(x):
@@ -48,7 +40,7 @@ def comb_score(e, ea):
 
 
 def feats(a):
-    return np.concatenate([a, [a.mean(), a.std(), a.min(), a.max(), a[8:18].mean() - a[:6].mean()]])
+    return np.concatenate([a, [a.mean(), a.std(), a.min(), a.max(), a[D8:D18].mean() - a[:N6].mean()]])
 
 
 rng = np.random.default_rng(0)
@@ -94,7 +86,7 @@ for t in TARGETS:
     print("done", t, flush=True)
 
 R = pd.DataFrame(rows)
-R.to_csv(os.path.join(D, "sameplay_results.csv"), index=False)
+R.to_csv(os.path.join(D, f"sameplay_results{suffix(RES)}.csv"), index=False)
 cols = ["adv_learned", "adv_oracle_Combined", "adv_oracle_Pearson"]
 print(R.groupby(["target", "k"])[cols].mean().round(3))
 S = R.groupby("k")[cols].agg(["mean", "std", "size"]).round(3)
