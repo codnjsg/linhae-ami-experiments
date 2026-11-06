@@ -20,7 +20,7 @@ fm.fontManager.addfont(F)
 plt.rcParams.update({"font.family": fm.FontProperties(fname=F).get_name(), "font.size": 8,
                      "axes.linewidth": 0.6, "xtick.major.width": 0.6, "ytick.major.width": 0.6})
 
-# 해상도는 순서가 있는 크기 → 한 색상(파랑) 밝음→어두움 (높은 해상도일수록 진하게)
+# 측정 간격(시간 해상도)은 순서가 있는 크기 → 한 색상(파랑) 밝음→어두움 (높은 해상도일수록 진하게)
 RES = [(60, "", "60분", "#86b6ef", "o"), (30, "_30min", "30분", "#2a78d6", "s"),
        (15, "_15min", "15분", "#104281", "D")]
 TIERS = [("attackers", "adv_oracle_Pearson", "(a) 오라클 (Pearson)"),
@@ -58,7 +58,7 @@ for ax, (kind, col, title) in zip(axes, TIERS):
         ax.spines[s].set_visible(False)
     ax.tick_params(length=2.5)
 axes[0].set_ylabel("우위 = 2(균형 정확도 − 0.5)")
-axes[0].legend(title="해상도", loc="lower left", fontsize=6.5, title_fontsize=6.5, frameon=False)
+axes[0].legend(title="측정 간격", loc="lower left", fontsize=6.5, title_fontsize=6.5, frameon=False)
 fig.tight_layout(pad=0.3, w_pad=0.8)
 for ext in ["png", "pdf"]:
     fig.savefig(os.path.join(OUT, f"fig_resolution_ko.{ext}"), dpi=300)
